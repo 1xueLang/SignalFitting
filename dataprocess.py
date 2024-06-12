@@ -95,6 +95,8 @@ def get_serial_data(root, batch=-1, config={'m': 'normal'}, shuffle=False):
         target_transform=TargetTransform(),
     )
     batch = len(ds) if batch == -1 else batch
+    if isinstance(batch, float):
+        batch = int(len(ds) * batch)
     dl = DataLoader(
         dataset=ds,
         batch_size=batch,
