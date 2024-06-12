@@ -19,7 +19,7 @@ def normalization(l, scaler=1.):
 
 
 class SerialData(Dataset):
-    def __init__(self, root, norm=(True, False), scaler=(25., 1.), transform=None, target_transform=None, fixed=True):
+    def __init__(self, root, patch=0, norm=(True, False), scaler=(25., 1.), transform=None, target_transform=None, fixed=True):
         super(SerialData, self).__init__()
         self.transform = transform
         self.target_transform = target_transform
@@ -39,11 +39,15 @@ class SerialData(Dataset):
                 dtype=np.float32
             )
         self.fixed = fixed
+        self.patch = patch
+        self.base, self.sub_len = self._base_and_len()
+        print(self.base, self.sub_len)
 
     def __len__(self):
-        return len(self.inputs) // 3
+        return self.sub_len
 
     def __getitem__(self, item):
+        item = item + self.base
         x = self.inputs[item]
         y = self.labels[item]
         if not self.fixed:
@@ -53,6 +57,14 @@ class SerialData(Dataset):
                 y = self.target_transform(y)
         return x, y
 
+    def _base_and_len(self):
+        base = [0, 5740, 12933]
+        total_len = len(self.inputs)
+        ends = [base[1], base[2], total_len]
+        sub_len = [ends[i] - base[i] for i in range(3)]
+        base.append(base[1])
+        sub_len.append(total_len - base[1])
+        return base[self.patch], sub_len[self.patch]
 
 class DataTransform:
     def __init__(self, config={'m': 'normal'}):
@@ -72,9 +84,15 @@ class DataTransform:
                 # np.exp2,
                 # np.exp
             ] * 16
-        else:
-            self.funclist = [lambda x: np.power(x, i + 1) for i in range(config['n'])]
-
+        elif config['m'] == 't':
+            self.funclist = ([lambda x: x] + [lambda x: np.power(x, i) for i in range(1, config['n'])]) * 16
+        elif config['m'] == 'f':
+            self.funclist = (
+                [lambda x: x] +
+                [lambda x: np.sin(i * x) for i in range(1, config['n'])] +
+                [lambda x: x] +
+                [lambda x: np.cos(i * x) for i in range(config['n'])]
+            ) * 16
     def __call__(self, x):
         return np.array(
             [f(x) for f in self.funclist], dtype=np.float32
@@ -88,9 +106,10 @@ class TargetTransform:
         return y * self.scaler
 
 
-def get_serial_data(root, batch=-1, config={'m': 'normal'}, shuffle=False):
+def get_serial_data(root, batch=-1, config={'m': 'normal'}, shuffle=False, patch=0):
     ds = SerialData(
         root,
+        patch=patch,
         transform=DataTransform(config),
         target_transform=TargetTransform(),
     )
