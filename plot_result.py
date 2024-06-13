@@ -19,7 +19,7 @@ if __name__ == '__main__':
     net0.load_state_dict(torch.load('pths/net-patch-0.bin'))
     net0.eval()
     in_channels = 8 * 16
-    net1 = models.DeepAnn1(in_channels=in_channels, h_channels=400)
+    net1 = models.DeepAnn1(in_channels=in_channels, h_channels=512)
     net1.load_state_dict(torch.load('pths/net-patch-1.bin'))
     net1.eval()
     in_channels = 8 * 16

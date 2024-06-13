@@ -120,6 +120,6 @@ if __name__ == '__main__':
     plt.plot(x, out)
     plt.subplot(2, 1, 2)
     plt.plot(x, dif, color='red')
-    plt.plot(x, dy, color='green')
+    plt.scatter(x, dy, color='lightblue', s=1)
     plt.savefig('pdfs/predict.pdf')
     plt.show()
