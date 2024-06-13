@@ -37,7 +37,7 @@ class PolynomialEncoder:
 
     def __call__(self, x):
         return torch.cat(
-            ([x] + [torch.pow(x, i) for i in range(1, self.n)]) * 16, dim=-1
+            ([x] + [torch.pow(x, 7) for i in range(1, self.n)]) * 16, dim=-1
         )
 
 
@@ -80,12 +80,12 @@ class SignalFunction:
         choice = self._map_to_encoder(x)
         x = torch.tensor([x], dtype=torch.float32)
         x.requires_grad = diff
-        # normx = (x - 1.0) / (20010.0 - 1.0) * 25.0
-        normx = x
+        normx = (x - 1.0) / (20010.0 - 1.0) * 25.0
+        # normx = x
         normx = self.encoder[choice](normx)
         normx = normx.unsqueeze(dim=0)
         y = self.model[choice](normx)
-        # y = y / 25.0
+        y = y / 25.0
         y = y.sum()
         if diff:
             y.backward()
@@ -94,9 +94,11 @@ class SignalFunction:
             return y
 
     def _map_to_encoder(self, x):
-        if x < ((5740.0 - 1.0) / 20009.0 * 25.0):
+        # if x < ((5740.0 - 1.0) / 20009.0 * 25.0):
+        if x < 5740.0:
             return 0
-        elif x < ((12933.0 - 1.0) / 20009.0 * 25.0):
+        # elif x < ((12933.0 - 1.0) / 20009.0 * 25.0):
+        elif x < 12933.0:
             return 1
         else:
             return 2
@@ -105,19 +107,17 @@ class SignalFunction:
 if __name__ == '__main__':
     signal_function = SignalFunction()
     x, y = load_xlsx('data/signal.xlsx')
-    x = (x - 1.0) / (20010.0 - 1.0) * 25.0
-    y = y * 25.0
-    x = x[5740:]
-    y = y[5740:]
-    # out = signal_function([x[23], x[6478], x[13678]])
-    # print(out, [y[23], y[6478], y[13678]])
-    # out, dif = signal_function.auto_diff([x[23], x[6478], x[13678]])
-    # print(out, [y[23], y[6478], y[13678]], dif)
+    # x = (x - 1.0) / (20010.0 - 1.0) * 25.0
+    # y = y * 25.0
     out, dif = signal_function.auto_diff(x)
     out = np.array(out, dtype=np.float32)
     dif = np.array(dif, dtype=np.float32)
+
     from matplotlib import pyplot as plt
+    plt.subplot(2, 1, 1)
     plt.plot(x, y)
     plt.plot(x, out)
+    plt.subplot(2, 1, 2)
     plt.plot(x, dif)
+    plt.savefig('pdfs/predict.pdf')
     plt.show()
