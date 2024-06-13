@@ -16,7 +16,7 @@ def print_curve(dl, net, p):
     plt.clf()
     plt.plot(x, y)
     plt.plot(x, out)
-    plt.savefig(f'fimage-{p}.pdf')
+    plt.savefig(f'pdfs/fimage-{p}.pdf')
 
 
 def print_loss(e, loss, net):

@@ -51,4 +51,4 @@ if __name__ == '__main__':
 
     plt.plot(x, y)
     plt.plot(x, out)
-    plt.savefig('fimage.pdf')
+    plt.savefig('pdfs/fimage.pdf')

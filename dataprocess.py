@@ -15,6 +15,7 @@ def load_xlsx(filename):
 def normalization(l, scaler=1.):
     _min = min(l)
     _max = max(l)
+    # print("+", _min, _max, scaler)
     return (l - _min) / (_max - _min) * scaler
 
 
