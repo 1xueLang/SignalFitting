@@ -122,4 +122,5 @@ if __name__ == '__main__':
     plt.plot(x, dif, color='red')
     plt.scatter(x, dy, color='lightblue', s=0.25)
     plt.savefig('pdfs/predict.pdf')
+    plt.savefig('pdfs/predict.png')
     plt.show()

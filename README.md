@@ -1,3 +1,3 @@
 ### Fitting Signal Curve Using Deep Neural Networks
 
-![predict](./pdfs/predict.pdf)
+![predict](./pdfs/predict.png)
