@@ -5,6 +5,14 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 
 
+class Power:
+    def __init__(self, p):
+        self.p = p
+
+    def __call__(self, x):
+        return np.power(x, self.p)
+
+
 def load_xlsx(filename):
     df = pd.read_excel(filename, header=None, index_col=None)
     data_dict = {col: df[col].values for col in df.columns}
@@ -63,6 +71,8 @@ class SerialData(Dataset):
         return x, y
 
     def _base_and_len(self):
+        if self.patch == -1:
+            return 0, len(self.inputs)
         base = [0, 5740, 12933]
         total_len = len(self.inputs)
         ends = [base[1], base[2], total_len]
@@ -98,7 +108,17 @@ class DataTransform:
                 # np.exp
             ] * 16
         elif config['m'] == 't':
-            self.funclist = ([lambda x: x] + [lambda x: np.power(x, i) for i in range(1, config['n'])]) * 16
+            self.funclist = ([lambda x: x, lambda x: -x] + [Power(i) for i in range(2, config['n'])]) * 16
+            # self.funclist = [
+            #     lambda x: x,
+            #     lambda x: -x,
+            #     lambda x: np.power(x, 2),
+            #     lambda x: np.power(x, 3),
+            #     lambda x: np.power(x, 4),
+            #     lambda x: np.power(x, 5),
+            #     lambda x: np.power(x, 6),
+            #     lambda x: np.power(x, 7),
+            # ] * 16
         elif config['m'] == 'f':
             self.funclist = (
                 [lambda x: x] +
@@ -143,9 +163,8 @@ def get_serial_data(root, batch=-1, config={'m': 'normal'}, shuffle=False, patch
 
 
 if __name__ == '__main__':
-    dl = get_serial_data('data/signal.xlsx')
-
+    dl = get_serial_data('data/signal.xlsx', config={'m': 't', 'n': 8}, shuffle=False, patch = 1)
     for x, y in dl:
         print(x)
-        print(y)
+        # print(y)
         

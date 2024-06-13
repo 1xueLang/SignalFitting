@@ -28,6 +28,7 @@ if __name__ == '__main__':
     # bound = 1e-4
     # shuffle = False
     # batch_size = 6
+    # batch_size2 = -1
     # lrs = [1e-3] * 4 + [3e-4] * 6 + [1e-4] * 20
     # root = 'data/signal.xlsx'
     # in_channels = 10 * 16
@@ -37,34 +38,52 @@ if __name__ == '__main__':
     # net = models.NormalAnn(in_channels=in_channels, h_channels=512 * 4)
 
     # #################################################################################################################################
-    # patch = 2, batch_size = 512
     # patch = 2
     # bound = -1.
     # shuffle = True
     # batch_size = 32
+    # batch_size2 = 512
     # lrs = [1e-3] * 2 + [1e-4] * 4 + [1e-5] * 8 + [3e-6] * 10 # patch = 2
     #
+    # expand = False
     # root = 'data/signal.xlsx'
     # in_channels = 8 * 16
     # dl = dataprocess.get_serial_data(root, batch_size, config={'m': 't', 'n': in_channels // 16}, shuffle=shuffle, patch=patch)
     # gdl = dataprocess.get_serial_data(root, batch=-1, config={'m': 't', 'n': in_channels // 16}, patch=patch)
     # net = models.DeepAnn(in_channels=in_channels, h_channels=512 * 2)
 
-    # ##################################################################################################################################
-    patch = 1
+    # #################################################################################################################################
+    patch = 1 # batch_size 512 * 4
     bound = -1.
     shuffle = True
     batch_size = 16
+    batch_size2 = 512 * 4
     # lrs = [1e-3] * 2 + [1e-4] * 4 + [1e-5] * 8 + [3e-6] * 10 # patch = 2
     lrs = [1e-3] * 3 + [1e-4] * 4 + [1e-5] * 8 + [3e-6] * 20
-    expand = True
+    expand = False
     root = 'data/signal.xlsx'
     in_channels = 8 * 16
     dl = dataprocess.get_serial_data(root, batch_size, config={'m': 't', 'n': in_channels // 16}, shuffle=shuffle, patch=patch, expand=expand)
     gdl = dataprocess.get_serial_data(root, batch=-1, config={'m': 't', 'n': in_channels // 16}, patch=patch, expand=expand)
-    net = models.DeepAnn1(in_channels=in_channels, h_channels=400)
+    net = models.DeepAnn1(in_channels=in_channels, h_channels=512)
 
     # ##################################################################################################################################
+
+    # patch = -1
+    # bound = -1.
+    # shuffle = True
+    # batch_size = 16
+    # # lrs = [1e-3] * 2 + [1e-4] * 4 + [1e-5] * 8 + [3e-6] * 10 # patch = 2
+    # lrs = [1e-3] * 3 + [1e-4] * 4 + [1e-5] * 8 + [3e-6] * 20
+    # expand = False
+    # root = 'data/signal.xlsx'
+    # in_channels = 8 * 16
+    # dl = dataprocess.get_serial_data(root, batch_size, config={'m': 't', 'n': in_channels // 16}, shuffle=shuffle, patch=patch, expand=expand)
+    # gdl = dataprocess.get_serial_data(root, batch=-1, config={'m': 't', 'n': in_channels // 16}, patch=patch, expand=expand)
+    # net = models.DeepAnn1(in_channels=in_channels, h_channels=768)
+
+    # ##################################################################################################################################
+
     epochs = 128 * 8
     net.train()
     criterion = torch.nn.MSELoss()
@@ -90,7 +109,7 @@ if __name__ == '__main__':
             if not mark and (loss < bound):
                 mark = True
                 # dl = dataprocess.get_serial_data(root, batch=-1, config={'m': 'normal'}, shuffle=False, patch=patch)
-                dl = dataprocess.get_serial_data(root, batch=512 * 4, config={'m': 't', 'n': in_channels // 16}, shuffle=True, patch=patch, expand=expand)
+                dl = dataprocess.get_serial_data(root, batch=batch_size2, config={'m': 't', 'n': in_channels // 16}, shuffle=True, patch=patch, expand=expand)
                 # dl = dataprocess.get_serial_data(root, batch=512 * 4, config={'m': 't', 'n': in_channels // 16}, shuffle=True, patch=patch)
                 best = 1.0
                 break
@@ -100,6 +119,6 @@ if __name__ == '__main__':
         if not mark:
             mark = True
             # dl = dataprocess.get_serial_data(root, batch=-1, config={'m': 'normal'}, shuffle=False, patch=patch)
-            dl = dataprocess.get_serial_data(root, batch=512 * 4, config={'m': 't', 'n': in_channels // 16}, shuffle=True, patch=patch, expand=expand)
+            dl = dataprocess.get_serial_data(root, batch=batch_size2, config={'m': 't', 'n': in_channels // 16}, shuffle=True, patch=patch, expand=expand)
             # dl = dataprocess.get_serial_data(root, batch=512 * 4, config={'m': 't', 'n': in_channels // 16}, shuffle=True, patch=patch)
             best = 1.
