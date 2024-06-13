@@ -19,15 +19,22 @@ def normalization(l, scaler=1.):
 
 
 class SerialData(Dataset):
-    def __init__(self, root, patch=0, norm=(True, False), scaler=(25., 1.), transform=None, target_transform=None, fixed=True):
+    def __init__(self, root, patch=0, norm=(True, False), scaler=(25., 1.), transform=None, target_transform=None, fixed=True, expand=False):
         super(SerialData, self).__init__()
         self.transform = transform
         self.target_transform = target_transform
         self.inputs, self.labels = load_xlsx(root)
+        self.patch = patch
+        self.base, self.sub_len = self._base_and_len()
+        print(self.base, self.sub_len)
         if norm[0]:
             self.inputs = normalization(self.inputs, scaler[0])
         if norm[1]:
             self.labels = normalization(self.labels, scaler[1])
+        self.inputs = self.inputs[self.base: self.base + self.sub_len]
+        self.labels = self.labels[self.base: self.base + self.sub_len]
+        if expand and patch == 1:
+            self._get_expand()
         if fixed and self.transform is not None:
             self.inputs = np.array(
                 [self.transform(x) for x in self.inputs],
@@ -39,15 +46,12 @@ class SerialData(Dataset):
                 dtype=np.float32
             )
         self.fixed = fixed
-        self.patch = patch
-        self.base, self.sub_len = self._base_and_len()
-        print(self.base, self.sub_len)
 
     def __len__(self):
-        return self.sub_len
+        return len(self.inputs)
 
     def __getitem__(self, item):
-        item = item + self.base
+        # item = item + self.base
         x = self.inputs[item]
         y = self.labels[item]
         if not self.fixed:
@@ -65,6 +69,14 @@ class SerialData(Dataset):
         base.append(base[1])
         sub_len.append(total_len - base[1])
         return base[self.patch], sub_len[self.patch]
+
+    def _get_expand(self):
+        dx = self.inputs[1] - self.inputs[0]
+        dy = self.labels[1] - self.labels[0]
+        ax = np.array([(self.inputs[0] - dx * i) for i in range(400, 0, -1)], dtype=np.float32)
+        ay = np.array([(self.labels[0] - dy * i) for i in range(400, 0, -1)], dtype=np.float32)
+        self.inputs = np.append(ax, self.inputs)
+        self.labels = np.append(ay, self.labels)
 
 class DataTransform:
     def __init__(self, config={'m': 'normal'}):
@@ -89,10 +101,14 @@ class DataTransform:
         elif config['m'] == 'f':
             self.funclist = (
                 [lambda x: x] +
-                [lambda x: np.sin(i * x) for i in range(1, config['n'])] +
+                [lambda x: np.sin(np.pi * i * x / 9.) for i in range(0, config['n'])] +
+                [lambda x: -x] +
+                [lambda x: -np.cos(np.pi * i * x / 9.) for i in range(config['n'])] +
                 [lambda x: x] +
-                [lambda x: np.cos(i * x) for i in range(config['n'])]
-            ) * 16
+                [lambda x: -np.sin(np.pi * i * x / 9.) for i in range(0, config['n'])] +
+                [lambda x: -x] +
+                [lambda x: -np.cos(np.pi * i * x / 9.) for i in range(config['n'])]
+            )
     def __call__(self, x):
         return np.array(
             [f(x) for f in self.funclist], dtype=np.float32
@@ -106,12 +122,13 @@ class TargetTransform:
         return y * self.scaler
 
 
-def get_serial_data(root, batch=-1, config={'m': 'normal'}, shuffle=False, patch=0):
+def get_serial_data(root, batch=-1, config={'m': 'normal'}, shuffle=False, patch=0, expand=False):
     ds = SerialData(
         root,
         patch=patch,
         transform=DataTransform(config),
         target_transform=TargetTransform(),
+        expand=expand
     )
     batch = len(ds) if batch == -1 else batch
     if isinstance(batch, float):
